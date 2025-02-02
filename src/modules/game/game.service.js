@@ -44,17 +44,13 @@ export class GameService {
   static attack = async (gameId, playerId = null) => {
     const game = await this.getGameById(gameId);
 
-    if (Boolean(game.currentTurn) && game.currentTurn.toString() !== playerId) {
-      return;
-    }
+    const isFirstPlayerAtacking = game.player1.toString() === playerId;
 
-    const isPlayerAttacking = game.player1.toString() === playerId;
-
-    const attackingPokemon = isPlayerAttacking
+    const attackingPokemon = isFirstPlayerAtacking
       ? game.player1_pokemon
       : game.player2_pokemon;
 
-    const defendingPokemon = isPlayerAttacking
+    const defendingPokemon = isFirstPlayerAtacking
       ? game.player2_pokemon
       : game.player1_pokemon;
 
@@ -67,10 +63,10 @@ export class GameService {
 
     if (defendingPokemon.currentHp <= 0) {
       game.status = GAME_STATUS.FINISHED;
-      game.winner = isPlayerAttacking ? game.player1 : game.player2;
+      game.winner = isFirstPlayerAtacking ? game.player1 : game.player2;
     }
 
-    game.currentTurn = isPlayerAttacking ? game.player2 : game.player1;
+    game.currentTurn = isFirstPlayerAtacking ? game.player2 : game.player1;
 
     const logString =
       damage > 0

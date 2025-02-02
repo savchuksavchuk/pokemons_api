@@ -1,3 +1,4 @@
+import { RateLimiter } from "../utils/socket_rate_limiter.js";
 import { GAME_STATUS } from "./game.constants.js";
 import { GameService } from "./game.service.js";
 
@@ -5,6 +6,8 @@ export class GameWithBotNamespaceController {
   constructor(io, routePath) {
     this.namespacePath = `${routePath}/game-with-bot`;
     this.gameWithBotNamespace = io.of(this.namespacePath);
+    this.rateLimiter = new RateLimiter();
+    this.botAttackDelay = 2000;
     this.initializeSocketEvents();
   }
 
@@ -21,7 +24,11 @@ export class GameWithBotNamespaceController {
     socket.on("start-with-bot", (data) =>
       this.handleStartWithBot(socket, data)
     );
-    socket.on("attack", (data) => this.handleAttack(socket, data));
+    socket.on("attack", (data) =>
+      this.rateLimiter.limit(socket, "attack", 1, this.botAttackDelay, () =>
+        this.handleAttack(socket, data)
+      )
+    );
   }
 
   async handleStartWithBot(socket, { playerId, pokemonId }) {
@@ -37,7 +44,7 @@ export class GameWithBotNamespaceController {
           socket.emit("game-updated", {
             message: gameAfterBotAttack,
           });
-        }, 2000);
+        }, this.botAttackDelay);
       }
 
       socket.emit("game-started", { message: game });
@@ -48,6 +55,15 @@ export class GameWithBotNamespaceController {
 
   async handleAttack(socket, { gameId, playerId }) {
     try {
+      const currentGame = await GameService.getGameById(gameId);
+
+      if (
+        Boolean(currentGame.currentTurn) &&
+        currentGame.currentTurn.toString() !== playerId
+      ) {
+        throw new Error("It's not your turn");
+      }
+
       const game = await GameService.attack(gameId, playerId);
 
       if (game.status === GAME_STATUS.FINISHED) {
@@ -65,7 +81,7 @@ export class GameWithBotNamespaceController {
           socket.emit("game-updated", {
             message: gameAfterBotAttack,
           });
-        }, 2000);
+        }, this.botAttackDelay);
       }
 
       socket.emit("game-updated", {
