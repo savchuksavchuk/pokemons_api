@@ -12,16 +12,24 @@ export class UserController extends BaseController {
     this.app.post(`${this.routePath}/login`, validateLogin, this.loginUser);
   }
 
-  getMessageToSign(_, res) {
-    const nonce = UserService.getMessageToSign();
-    res.status(200).json(nonce);
+  getMessageToSign(_, res, next) {
+    try {
+      const nonce = UserService.getMessageToSign();
+      res.status(200).json(nonce);
+    } catch (e) {
+      next(e);
+    }
   }
 
-  async loginUser(req, res) {
-    const { message, signature } = req.body;
+  async loginUser(req, res, next) {
+    try {
+      const { message, signature } = req.body;
 
-    const user = await UserService.loginUser(message, signature);
+      const user = await UserService.loginUser(message, signature);
 
-    res.status(200).json(user);
+      res.status(200).json(user);
+    } catch (e) {
+      next(e);
+    }
   }
 }
