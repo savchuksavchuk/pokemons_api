@@ -19,8 +19,8 @@ export class GameWithBotNamespaceController {
 
   handleConnection(socket) {
     console.log(`✅ User connected: ${socket.id}`);
-
     socket.on("disconnect", () => this.handleDisconnect(socket));
+
     socket.on("start-with-bot", (data) =>
       this.handleStartWithBot(socket, data)
     );

@@ -1,12 +1,13 @@
 import express from "express";
 import { CLIENT_URL, PORT } from "./config.js";
 import { DatabaseService } from "./modules/database/database.service.js";
-import { configureCors } from "./startup/cors.config.js";
 import { UserController } from "./modules/user/user.controller.js";
 import { PokemonController } from "./modules/pokemon/pokemon.controller.js";
 import { GameWithBotNamespaceController } from "./modules/game/game.controller.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import cors from "cors";
+import { errorHandler } from "./middlewares/error.middleware.js";
 
 const bootstrap = async () => {
   await DatabaseService.connect();
@@ -18,7 +19,14 @@ const bootstrap = async () => {
   });
 
   app.use(express.json());
-  configureCors(app);
+  app.use(
+    cors({
+      credentials: true,
+      origin: [CLIENT_URL],
+      methods: ["GET", "POST", "PUT", "DELETE"],
+    })
+  );
+  app.use(errorHandler);
 
   new UserController(app, "/user");
   new PokemonController(app, "/pokemon");
