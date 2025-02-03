@@ -54,6 +54,8 @@ export class GameWithBotNamespaceController {
   }
 
   async handleAttack(socket, { gameId, playerId }) {
+    console.log(`🔥 Attack from player ${playerId}`);
+
     try {
       const currentGame = await GameService.getGameById(gameId);
 
@@ -76,6 +78,8 @@ export class GameWithBotNamespaceController {
 
       if (game.currentTurn === null) {
         setTimeout(async () => {
+          console.log(`🔥 Attack from bot`);
+
           const gameAfterBotAttack = await GameService.botAttack(gameId);
 
           socket.emit("game-updated", {
